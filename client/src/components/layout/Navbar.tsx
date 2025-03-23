@@ -243,8 +243,8 @@ function NavLink({ href, isActive, children }: NavLinkProps) {
     <Link href={href}>
       <a className={`relative inline-flex items-center px-1 pt-1 text-sm font-medium 
         ${isActive 
-          ? "text-primary nav-link-active" 
-          : "text-gray-600 hover:text-primary nav-link"}`}
+          ? "text-primary font-semibold nav-link-active" 
+          : "text-gray-800 font-medium hover:text-primary nav-link"}`}
       >
         {children}
       </a>
@@ -257,8 +257,8 @@ function NavMobileLink({ href, isActive, children }: NavLinkProps) {
     <Link href={href}>
       <a className={`block px-3 py-2 rounded-md text-base font-medium 
         ${isActive 
-          ? "bg-primary-50 text-primary" 
-          : "text-gray-600 hover:bg-gray-50 hover:text-primary"}`}
+          ? "bg-primary-50 text-primary font-semibold" 
+          : "text-gray-800 font-medium hover:bg-gray-50 hover:text-primary"}`}
       >
         {children}
       </a>
