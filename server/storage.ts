@@ -1,6 +1,8 @@
 import { users, type User, type InsertUser, 
          courses, type Course, type InsertCourse,
          enrollments, type Enrollment, type InsertEnrollment } from "@shared/schema";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
 
 // Storage interface for all entities
 export interface IStorage {
@@ -8,7 +10,10 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Course operations
   getCourse(id: number): Promise<Course | undefined>;
@@ -23,9 +28,19 @@ export interface IStorage {
   getEnrollment(id: number): Promise<Enrollment | undefined>;
   getUserEnrollments(userId: number): Promise<Enrollment[]>;
   getCourseEnrollments(courseId: number): Promise<Enrollment[]>;
+  getAllEnrollments(): Promise<Enrollment[]>;
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
   updateEnrollmentProgress(id: number, progress: number): Promise<Enrollment | undefined>;
   completeEnrollment(id: number): Promise<Enrollment | undefined>;
+  
+  // Analytics operations
+  getTotalUsers(): Promise<number>;
+  getTotalCourses(): Promise<number>;
+  getTotalEnrollments(): Promise<number>;
+  getCourseCountByCategory(): Promise<{category: string, count: number}[]>;
+  
+  // Utility methods
+  hashPassword(password: string): Promise<string>;
 }
 
 export class MemStorage implements IStorage {
@@ -76,13 +91,50 @@ export class MemStorage implements IStorage {
       (user) => user.email.toLowerCase() === email.toLowerCase()
     );
   }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.userStore.values());
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const createdAt = new Date();
-    const user: User = { ...insertUser, id, createdAt };
+    
+    // Set default values for optional fields
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      isAdmin: insertUser.isAdmin || false
+    };
+    
     this.userStore.set(id, user);
     return user;
+  }
+  
+  async updateUser(id: number, userUpdate: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.userStore.get(id);
+    if (!existingUser) return undefined;
+    
+    const updatedUser: User = { 
+      ...existingUser, 
+      ...userUpdate
+    };
+    
+    this.userStore.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Check for enrollments first and delete them
+    const userEnrollments = await this.getUserEnrollments(id);
+    for (const enrollment of userEnrollments) {
+      this.enrollmentStore.delete(enrollment.id);
+    }
+    
+    return this.userStore.delete(id);
   }
 
   // Course methods
@@ -153,6 +205,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.enrollmentStore.values())
       .filter(enrollment => enrollment.courseId === courseId);
   }
+  
+  async getAllEnrollments(): Promise<Enrollment[]> {
+    return Array.from(this.enrollmentStore.values());
+  }
 
   async createEnrollment(insertEnrollment: InsertEnrollment): Promise<Enrollment> {
     const id = this.enrollmentIdCounter++;
@@ -200,6 +256,35 @@ export class MemStorage implements IStorage {
     };
     this.enrollmentStore.set(id, updatedEnrollment);
     return updatedEnrollment;
+  }
+  
+  // Analytics methods
+  async getTotalUsers(): Promise<number> {
+    return this.userStore.size;
+  }
+  
+  async getTotalCourses(): Promise<number> {
+    return this.courseStore.size;
+  }
+  
+  async getTotalEnrollments(): Promise<number> {
+    return this.enrollmentStore.size;
+  }
+  
+  async getCourseCountByCategory(): Promise<{category: string, count: number}[]> {
+    const categories = new Map<string, number>();
+    
+    // Count courses by category
+    for (const course of this.courseStore.values()) {
+      const category = course.category;
+      categories.set(category, (categories.get(category) || 0) + 1);
+    }
+    
+    // Convert to array of objects
+    return Array.from(categories.entries()).map(([category, count]) => ({
+      category,
+      count
+    }));
   }
   
   // Seed method to add demo courses

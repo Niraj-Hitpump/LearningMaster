@@ -12,6 +12,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // HTTP server
   const httpServer = createServer(app);
 
+  // =========== User Management Routes (Admin Only) ===========
+  
+  // Get all users (admin only)
+  app.get("/api/users", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      // Remove passwords from response
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      res.status(200).json(usersWithoutPasswords);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
+  // Get a single user (admin only)
+  app.get("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
+  // Create a user (admin only)
+  app.post("/api/users", isAdmin, async (req, res) => {
+    try {
+      // Validate user data
+      const userData = {
+        ...req.body,
+        // Make sure password is included
+        password: req.body.password || Math.random().toString(36).substring(2, 10) // Generate random password if not provided
+      };
+      
+      // Check if user already exists
+      const existingUserByUsername = await storage.getUserByUsername(userData.username);
+      if (existingUserByUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      const existingUserByEmail = await storage.getUserByEmail(userData.email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      
+      // Hash password before storing
+      userData.password = await storage.hashPassword(userData.password);
+      
+      const user = await storage.createUser(userData);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+  
+  // Update a user (admin only)
+  app.put("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Check if user exists
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Prevent changing admin status of admin user
+      if (existingUser.isAdmin && req.body.isAdmin === false) {
+        return res.status(403).json({ message: "Cannot remove admin status from admin user" });
+      }
+      
+      // If updating username, check if it's already taken
+      if (req.body.username && req.body.username !== existingUser.username) {
+        const existingUsername = await storage.getUserByUsername(req.body.username);
+        if (existingUsername && existingUsername.id !== id) {
+          return res.status(400).json({ message: "Username already exists" });
+        }
+      }
+      
+      // If updating email, check if it's already taken
+      if (req.body.email && req.body.email !== existingUser.email) {
+        const existingEmail = await storage.getUserByEmail(req.body.email);
+        if (existingEmail && existingEmail.id !== id) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+      }
+      
+      // If updating password, hash it
+      let userData = { ...req.body };
+      if (userData.password) {
+        userData.password = await storage.hashPassword(userData.password);
+      }
+      
+      const updatedUser = await storage.updateUser(id, userData);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser!;
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+  
+  // Delete a user (admin only)
+  app.delete("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Check if user exists
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Prevent deleting admin user
+      if (user.isAdmin) {
+        return res.status(403).json({ message: "Cannot delete admin user" });
+      }
+      
+      const deleted = await storage.deleteUser(id);
+      if (!deleted) {
+        return res.status(500).json({ message: "Failed to delete user" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+  
+  // =========== Analytics Routes (Admin Only) ===========
+  
+  app.get("/api/analytics/dashboard", isAdmin, async (req, res) => {
+    try {
+      const totalUsers = await storage.getTotalUsers();
+      const totalCourses = await storage.getTotalCourses();
+      const totalEnrollments = await storage.getTotalEnrollments();
+      const coursesByCategory = await storage.getCourseCountByCategory();
+      
+      // Count completed enrollments
+      const enrollments = await storage.getAllEnrollments();
+      const completedEnrollments = enrollments.filter(e => e.completed).length;
+      const completionRate = totalEnrollments > 0 
+        ? Math.round((completedEnrollments / totalEnrollments) * 100)
+        : 0;
+      
+      res.status(200).json({
+        totalUsers,
+        totalCourses,
+        totalEnrollments,
+        completedEnrollments,
+        completionRate,
+        coursesByCategory
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+  
+  // =========== Settings Routes (Admin Only) ===========
+  
+  app.get("/api/settings", isAdmin, async (req, res) => {
+    // In a real app, these would be stored in the database
+    res.status(200).json({
+      siteName: "EduHub LMS",
+      siteDescription: "A modern learning management system",
+      contactEmail: "admin@eduhub.com",
+      enableRegistration: true,
+      maintenanceMode: false
+    });
+  });
+  
+  app.put("/api/settings", isAdmin, async (req, res) => {
+    // In a real app, we would save these settings to storage
+    res.status(200).json({
+      ...req.body,
+      updated: true
+    });
+  });
+  
   // =========== Course Routes ===========
   
   // Get all courses
