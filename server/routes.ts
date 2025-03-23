@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAdmin } from "./auth";
-import { insertCourseSchema, insertEnrollmentSchema } from "@shared/schema";
+import { insertCourseSchema, insertEnrollmentSchema, insertMessageSchema, insertMessageReplySchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -502,6 +502,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(enrollmentWithCourse);
     } catch (error) {
       res.status(500).json({ message: "Failed to complete enrollment" });
+    }
+  });
+
+  // =========== Message Routes ===========
+
+  // Get all messages (admin only)
+  app.get("/api/messages", isAdmin, async (req, res) => {
+    try {
+      const messages = await storage.getAllMessages();
+      res.status(200).json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Get unread messages (admin only)
+  app.get("/api/messages/unread", isAdmin, async (req, res) => {
+    try {
+      const messages = await storage.getUnreadMessages();
+      res.status(200).json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch unread messages" });
+    }
+  });
+
+  // Get user messages
+  app.get("/api/messages/user", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const messages = await storage.getMessagesByUser(req.user!.id);
+      res.status(200).json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user messages" });
+    }
+  });
+
+  // Get message by ID
+  app.get("/api/messages/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+
+      const message = await storage.getMessage(id);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      // Check if user is authorized to view this message
+      if (!req.user!.isAdmin && message.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Get replies for this message
+      const replies = await storage.getMessageReplies(id);
+
+      // Return message with replies
+      res.status(200).json({
+        ...message,
+        replies
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch message" });
+    }
+  });
+
+  // Create a new message
+  app.post("/api/messages", async (req, res) => {
+    try {
+      // Prepare message data
+      let messageData: any = {
+        ...req.body,
+        status: "unread"
+      };
+
+      // If user is authenticated, add their ID
+      if (req.isAuthenticated()) {
+        messageData.userId = req.user!.id;
+      }
+
+      // Validate message data
+      const validMessageData = insertMessageSchema.parse(messageData);
+      
+      // Create message
+      const message = await storage.createMessage(validMessageData);
+
+      // If from authenticated user with an ID, update unread notification status
+      if (message.userId) {
+        await storage.setUserHasUnreadMessages(message.userId, true);
+      }
+
+      res.status(201).json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Create a reply to a message
+  app.post("/api/messages/:id/replies", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const messageId = parseInt(req.params.id);
+      if (isNaN(messageId)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+
+      // Check if message exists
+      const message = await storage.getMessage(messageId);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      // Only admin can reply to user messages
+      // Or users can reply to their own messages that admin has replied to
+      if (!req.user!.isAdmin && message.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Prepare reply data
+      const replyData = insertMessageReplySchema.parse({
+        ...req.body,
+        messageId,
+        userId: req.user!.id,
+        isAdmin: req.user!.isAdmin,
+        read: false
+      });
+
+      // Create reply
+      const reply = await storage.createMessageReply(replyData);
+
+      // If admin is replying to a user message, update the message status
+      if (req.user!.isAdmin && message.userId !== req.user!.id) {
+        await storage.updateMessageStatus(messageId, "replied");
+      }
+
+      // Set notification for user
+      if (!req.user!.isAdmin && message.userId) {
+        await storage.setUserHasUnreadMessages(message.userId, true);
+      }
+
+      res.status(201).json(reply);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create reply" });
+    }
+  });
+
+  // Update message status (admin only)
+  app.put("/api/messages/:id/status", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+
+      const { status } = req.body;
+      if (!status || typeof status !== "string") {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const message = await storage.updateMessageStatus(id, status);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      res.status(200).json(message);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update message status" });
+    }
+  });
+
+  // Mark reply as read
+  app.put("/api/messages/replies/:id/read", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid reply ID" });
+      }
+
+      const updatedReply = await storage.markReplyAsRead(id);
+      if (!updatedReply) {
+        return res.status(404).json({ message: "Reply not found" });
+      }
+
+      res.status(200).json(updatedReply);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark reply as read" });
+    }
+  });
+
+  // Delete a message (admin only)
+  app.delete("/api/messages/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+
+      const deleted = await storage.deleteMessage(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
+  // Get users with unread messages (admin only)
+  app.get("/api/notifications/unread-messages", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsersWithUnreadMessages();
+      res.status(200).json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users with unread messages" });
     }
   });
 

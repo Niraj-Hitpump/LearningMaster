@@ -135,7 +135,8 @@ export class MemStorage implements IStorage {
       createdAt,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
-      isAdmin: insertUser.isAdmin || false
+      isAdmin: insertUser.isAdmin || false,
+      hasUnreadMessages: false
     };
     
     this.userStore.set(id, user);
@@ -315,6 +316,139 @@ export class MemStorage implements IStorage {
     }));
   }
   
+  // Message methods
+  async getMessage(id: number): Promise<Message | undefined> {
+    return this.messageStore.get(id);
+  }
+
+  async getMessagesByUser(userId: number): Promise<Message[]> {
+    return Array.from(this.messageStore.values())
+      .filter(message => message.userId === userId);
+  }
+
+  async getAllMessages(): Promise<Message[]> {
+    return Array.from(this.messageStore.values());
+  }
+
+  async getUnreadMessages(): Promise<Message[]> {
+    return Array.from(this.messageStore.values())
+      .filter(message => message.status === "unread");
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const id = this.messageIdCounter++;
+    const createdAt = new Date();
+    
+    const message: Message = {
+      ...insertMessage,
+      id,
+      createdAt,
+      status: "unread"
+    };
+    
+    this.messageStore.set(id, message);
+    
+    // If the message is from a registered user, update their notification status
+    if (message.userId) {
+      const user = this.userStore.get(message.userId);
+      if (user) {
+        user.hasUnreadMessages = true;
+        this.userStore.set(user.id, user);
+      }
+    }
+    
+    return message;
+  }
+
+  async updateMessageStatus(id: number, status: string): Promise<Message | undefined> {
+    const message = this.messageStore.get(id);
+    if (!message) return undefined;
+    
+    const updatedMessage: Message = {
+      ...message,
+      status
+    };
+    
+    this.messageStore.set(id, updatedMessage);
+    return updatedMessage;
+  }
+
+  async deleteMessage(id: number): Promise<boolean> {
+    // Delete associated replies
+    const replies = await this.getMessageReplies(id);
+    for (const reply of replies) {
+      this.messageReplyStore.delete(reply.id);
+    }
+    
+    return this.messageStore.delete(id);
+  }
+
+  // Message reply methods
+  async getMessageReplies(messageId: number): Promise<MessageReply[]> {
+    return Array.from(this.messageReplyStore.values())
+      .filter(reply => reply.messageId === messageId);
+  }
+
+  async createMessageReply(insertReply: InsertMessageReply): Promise<MessageReply> {
+    const id = this.messageReplyIdCounter++;
+    const createdAt = new Date();
+    
+    const reply: MessageReply = {
+      ...insertReply,
+      id,
+      createdAt,
+      read: false
+    };
+    
+    this.messageReplyStore.set(id, reply);
+    
+    // Update the message status to "replied"
+    const message = this.messageStore.get(reply.messageId);
+    if (message) {
+      message.status = "replied";
+      this.messageStore.set(message.id, message);
+      
+      // If the message is from a registered user, update their notification status
+      if (message.userId) {
+        const user = this.userStore.get(message.userId);
+        if (user) {
+          user.hasUnreadMessages = true;
+          this.userStore.set(user.id, user);
+        }
+      }
+    }
+    
+    return reply;
+  }
+
+  async markReplyAsRead(id: number): Promise<MessageReply | undefined> {
+    const reply = this.messageReplyStore.get(id);
+    if (!reply) return undefined;
+    
+    const updatedReply: MessageReply = {
+      ...reply,
+      read: true
+    };
+    
+    this.messageReplyStore.set(id, updatedReply);
+    return updatedReply;
+  }
+
+  // Notification methods
+  async setUserHasUnreadMessages(userId: number, hasUnread: boolean): Promise<User | undefined> {
+    const user = this.userStore.get(userId);
+    if (!user) return undefined;
+    
+    user.hasUnreadMessages = hasUnread;
+    this.userStore.set(userId, user);
+    return user;
+  }
+
+  async getUsersWithUnreadMessages(): Promise<User[]> {
+    return Array.from(this.userStore.values())
+      .filter(user => user.hasUnreadMessages);
+  }
+
   // Password hashing utility
   async hashPassword(password: string): Promise<string> {
     const scryptAsync = promisify(scrypt);
