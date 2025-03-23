@@ -1,6 +1,8 @@
 import { users, type User, type InsertUser, 
-         courses, type Course, type InsertCourse,
-         enrollments, type Enrollment, type InsertEnrollment } from "@shared/schema";
+         courses, type Course, type InsertCourse, type CourseSection,
+         enrollments, type Enrollment, type InsertEnrollment,
+         messages, type Message, type InsertMessage,
+         messageReplies, type MessageReply, type InsertMessageReply } from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -33,6 +35,24 @@ export interface IStorage {
   updateEnrollmentProgress(id: number, progress: number): Promise<Enrollment | undefined>;
   completeEnrollment(id: number): Promise<Enrollment | undefined>;
   
+  // Message operations
+  getMessage(id: number): Promise<Message | undefined>;
+  getMessagesByUser(userId: number): Promise<Message[]>;
+  getAllMessages(): Promise<Message[]>;
+  getUnreadMessages(): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  updateMessageStatus(id: number, status: string): Promise<Message | undefined>;
+  deleteMessage(id: number): Promise<boolean>;
+  
+  // Message reply operations
+  getMessageReplies(messageId: number): Promise<MessageReply[]>;
+  createMessageReply(reply: InsertMessageReply): Promise<MessageReply>;
+  markReplyAsRead(id: number): Promise<MessageReply | undefined>;
+  
+  // Notification operations
+  setUserHasUnreadMessages(userId: number, hasUnread: boolean): Promise<User | undefined>;
+  getUsersWithUnreadMessages(): Promise<User[]>;
+  
   // Analytics operations
   getTotalUsers(): Promise<number>;
   getTotalCourses(): Promise<number>;
@@ -47,19 +67,27 @@ export class MemStorage implements IStorage {
   private userStore: Map<number, User>;
   private courseStore: Map<number, Course>;
   private enrollmentStore: Map<number, Enrollment>;
+  private messageStore: Map<number, Message>;
+  private messageReplyStore: Map<number, MessageReply>;
   
   private userIdCounter: number;
   private courseIdCounter: number;
   private enrollmentIdCounter: number;
+  private messageIdCounter: number;
+  private messageReplyIdCounter: number;
 
   constructor() {
     this.userStore = new Map();
     this.courseStore = new Map();
     this.enrollmentStore = new Map();
+    this.messageStore = new Map();
+    this.messageReplyStore = new Map();
     
     this.userIdCounter = 1;
     this.courseIdCounter = 1;
     this.enrollmentIdCounter = 1;
+    this.messageIdCounter = 1;
+    this.messageReplyIdCounter = 1;
     
     // Create admin user
     this.createUser({

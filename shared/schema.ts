@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  hasUnreadMessages: boolean("has_unread_messages").default(false),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -83,6 +84,42 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).pick({
   courseId: true,
 });
 
+// Contact message model
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),  // Optional: null for non-registered users
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("unread"), // unread, read, replied
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).pick({
+  userId: true,
+  name: true,
+  email: true,
+  subject: true,
+  message: true,
+});
+
+// Message replies model
+export const messageReplies = pgTable("message_replies", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull(),
+  adminId: integer("admin_id").notNull(),
+  reply: text("reply").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  read: boolean("read").default(false),
+});
+
+export const insertMessageReplySchema = createInsertSchema(messageReplies).pick({
+  messageId: true,
+  adminId: true,
+  reply: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -90,3 +127,7 @@ export type Course = typeof courses.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type MessageReply = typeof messageReplies.$inferSelect;
+export type InsertMessageReply = z.infer<typeof insertMessageReplySchema>;
