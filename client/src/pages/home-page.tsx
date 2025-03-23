@@ -88,9 +88,9 @@ export default function HomePage() {
             <div className="flex justify-between items-end mb-12">
               <div>
                 <h2 className="text-3xl font-bold font-sans text-gray-900">Popular Courses</h2>
-                <p className="mt-2 text-lg text-gray-800 font-medium">Explore our top-rated courses and start learning today</p>
+                <p className="mt-2 text-lg text-gray-800 font-semibold">Explore our top-rated courses and start learning today</p>
               </div>
-              <a href="/courses" className="hidden md:flex items-center text-primary hover:text-primary-700 font-medium">
+              <a href="/courses" className="hidden md:flex items-center text-primary hover:text-primary-700 font-semibold">
                 View all courses
                 <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -111,7 +111,7 @@ export default function HomePage() {
             )}
             
             <div className="mt-10 text-center md:hidden">
-              <a href="/courses" className="inline-flex items-center text-primary hover:text-primary-700 font-medium">
+              <a href="/courses" className="inline-flex items-center text-primary hover:text-primary-700 font-semibold">
                 View all courses
                 <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -126,7 +126,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold font-sans text-gray-900 sm:text-4xl">Meet Our Expert Instructors</h2>
-              <p className="mt-4 text-lg text-gray-800 font-medium max-w-2xl mx-auto">Learn from industry professionals with years of experience in their fields.</p>
+              <p className="mt-4 text-lg text-gray-800 font-semibold max-w-2xl mx-auto">Learn from industry professionals with years of experience in their fields.</p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">

@@ -49,7 +49,7 @@ export class MemStorage implements IStorage {
     // Create admin user
     this.createUser({
       username: "admin",
-      password: "adminpass", // This will be hashed in auth.ts
+      password: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9.989a8b11303c304159cba3d60f95f51c", // admin123 (pre-hashed)
       email: "admin@eduhub.com",
       firstName: "Admin",
       lastName: "User",

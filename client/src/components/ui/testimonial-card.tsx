@@ -31,7 +31,7 @@ export default function TestimonialCard({ content, author, index }: TestimonialC
             </div>
           </div>
           
-          <p className="text-gray-600 mb-6">{content}</p>
+          <p className="text-gray-700 mb-6 font-medium">{content}</p>
           
           <div className="flex items-center">
             <div className="h-10 w-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-medium mr-3">
