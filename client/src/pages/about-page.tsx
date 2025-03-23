@@ -137,17 +137,41 @@ export default function AboutPage() {
               <motion.div 
                 className="relative h-96"
                 variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="absolute top-0 left-0 w-4/5 h-4/5 bg-primary-50 rounded-lg"></div>
-                <div className="absolute bottom-0 right-0 w-4/5 h-4/5 bg-primary-800 rounded-lg overflow-hidden">
+                <motion.div 
+                  className="absolute top-0 left-0 w-4/5 h-4/5 bg-primary-50 rounded-lg"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                ></motion.div>
+                <motion.div 
+                  className="absolute bottom-0 right-0 w-4/5 h-4/5 bg-primary-800 rounded-lg overflow-hidden"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-800 opacity-90"></div>
                   <div className="relative p-8 text-white h-full flex flex-col justify-center">
-                    <blockquote className="text-xl italic font-medium mb-6">
+                    <motion.blockquote 
+                      className="text-xl italic font-medium mb-6"
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 0.6 }}
+                    >
                       "Education is the most powerful weapon which you can use to change the world."
-                    </blockquote>
-                    <cite className="font-medium">- Nelson Mandela</cite>
+                    </motion.blockquote>
+                    <motion.cite 
+                      className="font-medium"
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 0.8 }}
+                    >
+                      - Nelson Mandela
+                    </motion.cite>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             </motion.div>
           </div>

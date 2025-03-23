@@ -124,6 +124,7 @@ export default function ContactPage() {
                   className="bg-white p-6 rounded-lg shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                   transition={{ duration: 0.5 }}
                 >
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h2>
@@ -201,6 +202,7 @@ export default function ContactPage() {
                   className="bg-white p-6 md:p-8 rounded-lg shadow-sm"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.01, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                   transition={{ duration: 0.5 }}
                 >
                   {isSubmitted ? (

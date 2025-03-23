@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Course } from "@shared/schema";
 import CourseCard from "@/components/ui/course-card";
 import TestimonialCard from "@/components/ui/testimonial-card";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   // Fetch featured courses
@@ -87,7 +88,7 @@ export default function HomePage() {
             <div className="flex justify-between items-end mb-12">
               <div>
                 <h2 className="text-3xl font-bold font-sans text-gray-900">Popular Courses</h2>
-                <p className="mt-2 text-lg text-gray-600">Explore our top-rated courses and start learning today</p>
+                <p className="mt-2 text-lg text-gray-800 font-medium">Explore our top-rated courses and start learning today</p>
               </div>
               <a href="/courses" className="hidden md:flex items-center text-primary hover:text-primary-700 font-medium">
                 View all courses
@@ -125,18 +126,29 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold font-sans text-gray-900 sm:text-4xl">Meet Our Expert Instructors</h2>
-              <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Learn from industry professionals with years of experience in their fields.</p>
+              <p className="mt-4 text-lg text-gray-800 font-medium max-w-2xl mx-auto">Learn from industry professionals with years of experience in their fields.</p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {instructors.map((instructor, index) => (
-                <div key={index} className="bg-gray-50 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
-                  <div className="w-32 h-32 rounded-full mx-auto mb-4 bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-bold border-4 border-white shadow-md">
+                <motion.div 
+                  key={index} 
+                  className="bg-gray-50 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -5, boxShadow: "0 12px 30px -10px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <motion.div 
+                    className="w-32 h-32 rounded-full mx-auto mb-4 bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-bold border-4 border-white shadow-md"
+                    whileHover={{ scale: 1.05, borderColor: "rgba(99, 102, 241, 0.4)" }}
+                  >
                     {instructor.initial}
-                  </div>
+                  </motion.div>
                   <h3 className="text-xl font-semibold text-gray-900">{instructor.name}</h3>
                   <p className="text-primary mb-2">{instructor.role}</p>
-                  <p className="text-gray-600 text-sm mb-3">{instructor.bio}</p>
+                  <p className="text-gray-700 text-sm mb-3 font-medium">{instructor.bio}</p>
                   <div className="flex justify-center space-x-3">
                     <a href="#" className="text-gray-500 hover:text-primary">
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -154,7 +166,7 @@ export default function HomePage() {
                       </svg>
                     </a>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
