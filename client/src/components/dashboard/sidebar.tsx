@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Home,
   BookOpen,
@@ -10,7 +11,10 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -25,11 +29,38 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const { logoutMutation } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Get unread messages count for admin
+  const { data: unreadMessages = [] } = useQuery({
+    queryKey: ["/api/messages/unread"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: isAdmin,
+    // Refetch every minute to keep badge updated
+    refetchInterval: 60000,
+  });
+
+  const unreadCount = unreadMessages.length;
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
   const isActive = (path: string) => location === path;
+
+  // Create message menu item with unread count badge
+  const messageMenuItem = {
+    icon: MessageSquare,
+    label: (
+      <div className="flex items-center">
+        Messages
+        {unreadCount > 0 && (
+          <Badge variant="destructive" className="ml-2 text-xs px-1">
+            {unreadCount}
+          </Badge>
+        )}
+      </div>
+    ),
+    path: "/admin/messages"
+  };
 
   // Define menu items based on user role
   const menuItems = isAdmin
@@ -38,6 +69,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         { icon: BookOpen, label: "Courses", path: "/admin/courses" },
         { icon: PlusCircle, label: "Add Course", path: "/admin/courses/add" },
         { icon: Users, label: "Users", path: "/admin/users" },
+        messageMenuItem,
         { icon: BarChart, label: "Analytics", path: "/admin/analytics" },
         { icon: Settings, label: "Settings", path: "/admin/settings" },
       ]
@@ -71,12 +103,12 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       <div className="hidden lg:flex h-full flex-col bg-white border-r w-64 fixed left-0 top-0 bottom-0">
         <div className="p-4 border-b">
           <Link href="/">
-            <a className="flex items-center">
+            <div className="flex items-center cursor-pointer">
               <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
               </svg>
               <span className="ml-2 text-xl font-bold text-primary-800">EduHub</span>
-            </a>
+            </div>
           </Link>
         </div>
         
@@ -132,12 +164,12 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
             >
               <div className="p-4 border-b">
                 <Link href="/">
-                  <a className="flex items-center">
+                  <div className="flex items-center cursor-pointer">
                     <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                     </svg>
                     <span className="ml-2 text-xl font-bold text-primary-800">EduHub</span>
-                  </a>
+                  </div>
                 </Link>
               </div>
               
@@ -145,7 +177,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                 <nav className="space-y-1">
                   {menuItems.map((item) => (
                     <Link key={item.path} href={item.path}>
-                      <a onClick={() => setIsMobileOpen(false)}>
+                      <div onClick={() => setIsMobileOpen(false)}>
                         <Button
                           variant={isActive(item.path) ? "secondary" : "ghost"}
                           className={cn(
@@ -156,7 +188,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                           <item.icon className="mr-3 h-5 w-5" />
                           {item.label}
                         </Button>
-                      </a>
+                      </div>
                     </Link>
                   ))}
                 </nav>

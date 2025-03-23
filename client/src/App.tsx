@@ -17,6 +17,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminCourses from "@/pages/admin/courses";
 import AddCourse from "@/pages/admin/add-course";
 import EditCourse from "@/pages/admin/edit-course";
+import AdminMessages from "@/pages/admin/messages";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
       <ProtectedRoute path="/admin/courses" component={AdminCourses} role="admin" />
       <ProtectedRoute path="/admin/courses/add" component={AddCourse} role="admin" />
       <ProtectedRoute path="/admin/courses/edit/:id" component={EditCourse} role="admin" />
+      <ProtectedRoute path="/admin/messages" component={AdminMessages} role="admin" />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

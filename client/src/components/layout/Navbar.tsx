@@ -42,14 +42,14 @@ export default function Navbar() {
           {/* Logo and desktop navigation */}
           <div className="flex items-center">
             <Link href="/">
-              <a className="flex-shrink-0 flex items-center">
+              <div className="flex-shrink-0 flex items-center cursor-pointer">
                 <div className="flex items-center">
                   <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                   </svg>
                   <span className="ml-2 text-xl font-bold text-primary-800 font-sans">EduHub</span>
                 </div>
-              </a>
+              </div>
             </Link>
             
             <div className="hidden md:ml-10 md:flex md:space-x-8">
@@ -91,19 +91,19 @@ export default function Navbar() {
                   
                   <DropdownMenuItem asChild>
                     <Link href={user.isAdmin ? "/admin" : "/dashboard"}>
-                      <a className="flex w-full cursor-pointer items-center">
+                      <div className="flex w-full cursor-pointer items-center">
                         <User className="mr-2 h-4 w-4" />
                         <span>{user.isAdmin ? "Admin Dashboard" : "My Dashboard"}</span>
-                      </a>
+                      </div>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">
-                      <a className="flex w-full cursor-pointer items-center">
+                      <div className="flex w-full cursor-pointer items-center">
                         <BookOpen className="mr-2 h-4 w-4" />
                         <span>My Courses</span>
-                      </a>
+                      </div>
                     </Link>
                   </DropdownMenuItem>
                   
@@ -241,13 +241,13 @@ type NavLinkProps = {
 function NavLink({ href, isActive, children }: NavLinkProps) {
   return (
     <Link href={href}>
-      <a className={`relative inline-flex items-center px-1 pt-1 text-sm font-medium 
+      <div className={`relative inline-flex items-center px-1 pt-1 text-sm font-medium cursor-pointer
         ${isActive 
           ? "text-primary font-semibold nav-link-active" 
           : "text-gray-800 font-medium hover:text-primary nav-link"}`}
       >
         {children}
-      </a>
+      </div>
     </Link>
   );
 }
@@ -255,13 +255,13 @@ function NavLink({ href, isActive, children }: NavLinkProps) {
 function NavMobileLink({ href, isActive, children }: NavLinkProps) {
   return (
     <Link href={href}>
-      <a className={`block px-3 py-2 rounded-md text-base font-medium 
+      <div className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer
         ${isActive 
           ? "bg-primary-50 text-primary font-semibold" 
           : "text-gray-800 font-medium hover:bg-gray-50 hover:text-primary"}`}
       >
         {children}
-      </a>
+      </div>
     </Link>
   );
 }
