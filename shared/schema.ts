@@ -94,31 +94,44 @@ export const messages = pgTable("messages", {
   message: text("message").notNull(),
   status: text("status").default("unread"), // unread, read, replied
   createdAt: timestamp("created_at").defaultNow(),
+  reason: text("reason"),  // Add this field
 });
 
-export const insertMessageSchema = createInsertSchema(messages).pick({
-  userId: true,
-  name: true,
-  email: true,
-  subject: true,
-  message: true,
-});
+export const insertMessageSchema = createInsertSchema(messages)
+  .pick({
+    userId: true,
+    name: true,
+    email: true,
+    subject: true,
+    message: true,
+    reason: true,
+  })
+  .extend({
+    reason: z.string().min(1, "Please select a reason"),
+  });
 
 // Message replies model
 export const messageReplies = pgTable("message_replies", {
   id: serial("id").primaryKey(),
   messageId: integer("message_id").notNull(),
-  adminId: integer("admin_id").notNull(),
-  reply: text("reply").notNull(),
+  userId: integer("user_id").notNull(),
+  content: text("content").notNull(),
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   read: boolean("read").default(false),
 });
 
-export const insertMessageReplySchema = createInsertSchema(messageReplies).pick({
-  messageId: true,
-  adminId: true,
-  reply: true,
-});
+export const insertMessageReplySchema = createInsertSchema(messageReplies)
+  .pick({
+    messageId: true,
+    userId: true,
+    content: true,
+    isAdmin: true,
+  })
+  .extend({
+    content: z.string().min(1, "Reply content is required"),
+    isAdmin: z.boolean().optional().default(false),
+  });
 
 // Export types
 export type User = typeof users.$inferSelect;

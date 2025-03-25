@@ -89,14 +89,16 @@ export class MemStorage implements IStorage {
     this.messageIdCounter = 1;
     this.messageReplyIdCounter = 1;
     
-    // Create admin user
-    this.createUser({
-      username: "admin",
-      password: "admin123", // Will be bypassed in auth.ts with special admin check
-      email: "admin@eduhub.com",
-      firstName: "Admin",
-      lastName: "User",
-      isAdmin: true
+    // Create admin user with hashed password
+    this.hashPassword("admin123").then(hashedPassword => {
+      this.createUser({
+        username: "admin",
+        password: hashedPassword, // Now using hashed password
+        email: "admin@eduhub.com",
+        firstName: "Admin",
+        lastName: "User",
+        isAdmin: true
+      });
     });
     
     // Add some demo courses

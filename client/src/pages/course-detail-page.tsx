@@ -158,7 +158,7 @@ export default function CourseDetailPage() {
       
       <main className="flex-grow">
         {/* Course header */}
-        <div className="bg-gradient-to-r from-primary-800 to-accent-500 text-white py-12">
+        <div className="bg-gradient-to-r from-primary-800 to-accent-500 text-black py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Button variant="ghost" className="text-white mb-4" asChild>
               <a href="/courses">

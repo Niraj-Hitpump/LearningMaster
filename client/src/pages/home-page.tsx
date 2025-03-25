@@ -72,7 +72,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col text-black">
       <Navbar />
       
       <main className="flex-grow">
@@ -177,7 +177,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold font-sans text-white sm:text-4xl">What Our Students Say</h2>
-              <p className="mt-4 text-lg text-indigo-100 max-w-2xl mx-auto">Don't just take our word for it. Here's what students have to say about their learning experience.</p>
+              <p className="mt-4 text-lg text-black max-w-2xl mx-auto">Don't just take our word for it. Here's what students have to say about their learning experience.</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
+import { apiRequest } from "@/lib/api";  // Update this line
 
 // Form validation schema
 const contactFormSchema = z.object({
@@ -34,8 +35,8 @@ const contactFormSchema = z.object({
   subject: z.string().min(5, "Subject must be at least 5 characters"),
   message: z.string().min(10, "Message must be at least 10 characters"),
   reason: z.string({
-    required_error: "Please select a reason for contacting us",
-  }),
+    required_error: "Please select a reason",
+  }).min(1, "Please select a reason"),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -63,7 +64,7 @@ export default function ContactPage() {
       email: "",
       subject: "",
       message: "",
-      reason: "",
+      reason: "", // Change this line
     },
   });
   
@@ -71,19 +72,27 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Form data:", data);
-      
+    try {
+      const response = await apiRequest('POST', '/api/messages', data);
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
       toast({
         title: "Message sent successfully",
         description: "We'll get back to you as soon as possible.",
       });
-      
-      setIsSubmitting(false);
       setIsSubmitted(true);
       form.reset();
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -92,7 +101,7 @@ export default function ContactPage() {
       
       <main className="flex-grow">
         {/* Header section */}
-        <section className="bg-gradient-to-r from-primary-700 to-accent-500 py-16 text-white">
+        <section className="bg-gradient-to-r from-primary-700 to-accent-500 py-16 text-black">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.h1 
               className="text-4xl font-bold mb-4"
@@ -103,7 +112,7 @@ export default function ContactPage() {
               Contact Us
             </motion.h1>
             <motion.p 
-              className="text-xl text-indigo-100 max-w-2xl mx-auto"
+              className="text-xl text-gray-800 text-bold max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -266,30 +275,34 @@ export default function ContactPage() {
                               )}
                             />
                             
+                            {/* create Reason drop down option */}
                             <FormField
-                              control={form.control}
-                              name="reason"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Reason</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a reason" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {contactReasons.map((reason) => (
-                                        <SelectItem key={reason} value={reason}>
-                                          {reason}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+  control={form.control}
+  name="reason"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Reason</FormLabel>
+      <FormControl>
+        <Select 
+          onValueChange={field.onChange} 
+          defaultValue={field.value}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a reason" />
+          </SelectTrigger>
+          <SelectContent>
+            {contactReasons.map((reason) => (
+              <SelectItem key={reason} value={reason}>
+                {reason}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
                           </div>
                           
                           <FormField

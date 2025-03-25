@@ -139,154 +139,159 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="flex h-screen">
-      <Sidebar isAdmin={true} />
-      <div className="flex-1 p-8 overflow-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground">Manage your users and their access</p>
-          </div>
-          <Button onClick={handleCreate} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Add User
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-            <CardDescription>A list of all users in the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="bg-gray-50 min-h-screen">
+      <div className="flex flex-col lg:flex-row">
+        <Sidebar isAdmin />
+        
+        <div className="flex-1 lg:ml-64">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+                <p className="text-muted-foreground">Manage your users and their access</p>
               </div>
-            ) : !users || users.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No users found</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Created At</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.id}</TableCell>
-                        <TableCell>{user.username}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          {user.firstName} {user.lastName}
-                        </TableCell>
-                        <TableCell>
-                          {user.isAdmin ? (
-                            <Badge className="bg-purple-500 hover:bg-purple-600">Admin</Badge>
-                          ) : (
-                            <Badge variant="secondary">User</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              onClick={() => handleEdit(user)}
-                              size="icon"
-                              variant="outline"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              onClick={() => handleDelete(user)}
-                              size="icon"
-                              variant="destructive"
-                              disabled={user.isAdmin}
-                              title={user.isAdmin ? "Cannot delete admin user" : "Delete user"}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add User
+              </Button>
+            </div>
 
-        {/* Edit User Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>
-                Update the user details below
-              </DialogDescription>
-            </DialogHeader>
-            {selectedUser && (
-              <UserForm
-                initialData={selectedUser}
-                onSuccess={handleSuccess}
-                isUpdate
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Create User Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create User</DialogTitle>
-              <DialogDescription>
-                Fill in the user details below
-              </DialogDescription>
-            </DialogHeader>
-            <UserForm onSuccess={handleSuccess} />
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the user 
-                <span className="font-semibold"> {selectedUser?.username}</span> and
-                all their enrollments.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={confirmDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deleteUserMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle>All Users</CardTitle>
+                <CardDescription>A list of all users in the system</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : !users || users.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No users found</p>
+                  </div>
                 ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <div className="relative w-full overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>ID</TableHead>
+                          <TableHead>Username</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Created At</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.id}</TableCell>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              {user.firstName} {user.lastName}
+                            </TableCell>
+                            <TableCell>
+                              {user.isAdmin ? (
+                                <Badge className="bg-purple-500 hover:bg-purple-600">Admin</Badge>
+                              ) : (
+                                <Badge variant="secondary">User</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  onClick={() => handleEdit(user)}
+                                  size="icon"
+                                  variant="outline"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  onClick={() => handleDelete(user)}
+                                  size="icon"
+                                  variant="destructive"
+                                  disabled={user.isAdmin}
+                                  title={user.isAdmin ? "Cannot delete admin user" : "Delete user"}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </CardContent>
+            </Card>
+
+            {/* Edit User Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Edit User</DialogTitle>
+                  <DialogDescription>
+                    Update the user details below
+                  </DialogDescription>
+                </DialogHeader>
+                {selectedUser && (
+                  <UserForm
+                    initialData={selectedUser}
+                    onSuccess={handleSuccess}
+                    isUpdate
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Create User Dialog */}
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Create User</DialogTitle>
+                  <DialogDescription>
+                    Fill in the user details below
+                  </DialogDescription>
+                </DialogHeader>
+                <UserForm onSuccess={handleSuccess} />
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the user 
+                    <span className="font-semibold"> {selectedUser?.username}</span> and
+                    all their enrollments.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={confirmDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteUserMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
       </div>
     </div>
   );

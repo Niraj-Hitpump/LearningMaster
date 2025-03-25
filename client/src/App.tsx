@@ -18,6 +18,7 @@ import AdminCourses from "@/pages/admin/courses";
 import AddCourse from "@/pages/admin/add-course";
 import EditCourse from "@/pages/admin/edit-course";
 import AdminMessages from "@/pages/admin/messages";
+import AdminUsers from "@/pages/admin/users";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
       
       {/* Protected admin routes */}
       <ProtectedRoute path="/admin" component={AdminDashboard} role="admin" />
+      <ProtectedRoute path="/admin/users" component={AdminUsers} role="admin" />
       <ProtectedRoute path="/admin/courses" component={AdminCourses} role="admin" />
       <ProtectedRoute path="/admin/courses/add" component={AddCourse} role="admin" />
       <ProtectedRoute path="/admin/courses/edit/:id" component={EditCourse} role="admin" />

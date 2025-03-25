@@ -28,7 +28,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-r from-primary-700 to-accent-500">
+    <section className="relative overflow-hidden bg-gradient-to-r from-primary-700 to-accent-500 text-black">
       {/* Background elements for visual interest */}
       <div className="absolute inset-0 bg-grid-white/[0.05] bg-[length:20px_20px]"></div>
       <div className="absolute -bottom-32 left-1/2 transform -translate-x-1/2">
@@ -80,20 +80,20 @@ export default function HeroSection() {
               className="inline-block px-3 py-1 mb-6 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium"
               variants={itemVariants}
             >
-              <span className="flex items-center">
+              <span className="flex items-center text-black">
                 <Star className="w-4 h-4 mr-1 text-yellow-300" fill="currentColor" /> 
                 Highest rated learning platform
               </span>
             </motion.div>
             
             <motion.h1 
-              className="font-sans font-bold text-4xl md:text-5xl lg:text-6xl text-white leading-tight drop-shadow-md mb-6"
+              className="font-sans font-bold text-4xl md:text-5xl lg:text-6xl leading-tight drop-shadow-md mb-6"
               variants={itemVariants}
             >
               Unlock Your Potential with <span className="text-yellow-300 relative inline-block">
                 Online Learning
                 <motion.span 
-                  className="absolute bottom-1 left-0 h-1 bg-yellow-300 w-full"
+                  className="absolute bottom-[-5px] left-0 h-1 bg-yellow-300 w-full"
                   initial={{ width: 0 }}
                   animate={{ width: "100%" }}
                   transition={{ duration: 1, delay: 1 }}
@@ -139,48 +139,29 @@ export default function HeroSection() {
             >
               <div className="flex -space-x-2">
                 <div className="h-8 w-8 rounded-full border-2 border-white bg-primary-300 flex items-center justify-center shadow-lg">
-                  <span className="text-xs font-bold text-white">JS</span>
+                  <span className="text-xs font-bold">JS</span>
                 </div>
                 <div className="h-8 w-8 rounded-full border-2 border-white bg-accent-400 flex items-center justify-center shadow-lg">
-                  <span className="text-xs font-bold text-white">MK</span>
+                  <span className="text-xs font-bold">MK</span>
                 </div>
                 <div className="h-8 w-8 rounded-full border-2 border-white bg-secondary-500 flex items-center justify-center shadow-lg">
-                  <span className="text-xs font-bold text-white">TD</span>
+                  <span className="text-xs font-bold">TD</span>
                 </div>
               </div>
-              <p className="ml-4 text-white font-medium drop-shadow">
-                <span className="font-bold text-white">12,000+</span> students already learning
+              <p className="ml-4 font-medium drop-shadow">
+                <span className="font-bold">12,000+</span> students already learning
               </p>
             </motion.div>
             
             {/* Stats section */}
             <motion.div
-              className="grid grid-cols-3 gap-4 mt-8 bg-white/10 backdrop-blur-sm p-4 rounded-lg"
+              className="grid grid-cols-3 gap-4 mt-8 bg-white/10 backdrop-blur-sm p-4 rounded-lg text-black"
               variants={itemVariants}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
             >
               <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <BookOpen className="h-5 w-5 text-yellow-300" />
-                </div>
-                <p className="text-white font-bold text-xl">200+</p>
-                <p className="text-white/80 text-xs">Courses</p>
-              </div>
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <Users className="h-5 w-5 text-yellow-300" />
-                </div>
-                <p className="text-white font-bold text-xl">50+</p>
-                <p className="text-white/80 text-xs">Expert Instructors</p>
-              </div>
-              <div className="text-center">
-                <div className="flex justify-center mb-1">
-                  <Award className="h-5 w-5 text-yellow-300" />
-                </div>
-                <p className="text-white font-bold text-xl">100%</p>
-                <p className="text-white/80 text-xs">Satisfaction</p>
               </div>
             </motion.div>
           </div>

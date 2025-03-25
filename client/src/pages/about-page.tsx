@@ -78,26 +78,25 @@ export default function AboutPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold text-black mb-6">
                 About EduHub
               </h1>
-              <p className="text-xl text-indigo-100 mb-8">
+              <p className="text-xl text-black mb-8">
                 We're on a mission to transform online education by connecting passionate instructors with eager learners worldwide.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
-                  Our Story
-                </Button>
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary">
-                  Join Our Team
-                </Button>
-              </div>
+              <Button asChild>
+                <a href="/contact" className="flex items-center">
+                  Get Started <span className="ml-2">→</span>
+                </a>
+                
+              </Button>
+              
             </motion.div>
           </div>
         </section>
         
         {/* Mission section */}
-        <section className="py-16 md:py-24 bg-white">
+        <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               className="grid md:grid-cols-2 gap-12 items-center"
@@ -357,7 +356,7 @@ export default function AboutPage() {
               Ready to Start Your Learning Journey?
             </motion.h2>
             <motion.p 
-              className="text-lg text-indigo-100 mb-8"
+              className="text-lg text-black mb-8"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -372,7 +371,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100" asChild>
+              <Button size="lg" className="bg-primary text-primary hover:bg-gray-100" asChild>
                 <a href="/courses">Explore Courses</a>
               </Button>
             </motion.div>

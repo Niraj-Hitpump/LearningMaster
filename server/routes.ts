@@ -637,26 +637,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized" });
       }
 
-      // Prepare reply data
-      const replyData = insertMessageReplySchema.parse({
-        ...req.body,
+      const replyData = {
         messageId,
         userId: req.user!.id,
-        isAdmin: req.user!.isAdmin,
-        read: false
-      });
+        content: req.body.content,
+        isAdmin: Boolean(req.user!.isAdmin)
+      };
 
-      // Create reply
-      const reply = await storage.createMessageReply(replyData);
+      // Validate and create reply
+      const validatedData = insertMessageReplySchema.parse(replyData);
+      const reply = await storage.createMessageReply(validatedData);
 
-      // If admin is replying to a user message, update the message status
-      if (req.user!.isAdmin && message.userId !== req.user!.id) {
+      // Update message status if admin is replying
+      if (req.user!.isAdmin) {
         await storage.updateMessageStatus(messageId, "replied");
-      }
-
-      // Set notification for user
-      if (!req.user!.isAdmin && message.userId) {
-        await storage.setUserHasUnreadMessages(message.userId, true);
       }
 
       res.status(201).json(reply);
@@ -744,6 +738,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(users);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users with unread messages" });
+    }
+  });
+
+  // Get unread message count
+  app.get("/api/messages/unread-count", isAdmin, async (req, res) => {
+    try {
+      const messages = await storage.getUnreadMessages();
+      res.json(messages.length);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get unread count" });
+    }
+  });
+
+  // Check for new messages
+  app.get("/api/messages/check-new", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (!req.user!.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const messages = await storage.getUnreadMessages();
+      res.json(messages.length > 0);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check new messages" });
     }
   });
 

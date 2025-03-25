@@ -328,12 +328,12 @@ export default function AuthPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="bg-gradient-to-r from-primary-600 to-accent-500 text-white p-8 rounded-lg shadow-xl">
+          <div className="bg-gradient-to-r from-primary-600 to-accent-500 text-black p-8 rounded-lg shadow-xl">
             <div className="mb-6">
               <h2 className="text-3xl font-bold mb-4">
                 Empower Your Future with EduHub
               </h2>
-              <p className="text-lg text-indigo-100 mb-6">
+              <p className="text-lg text-black mb-6">
                 Join our community of learners and gain in-demand skills with our expert-led courses.
               </p>
               <ul className="space-y-3">
@@ -378,8 +378,13 @@ export default function AuthPage() {
       </div>
       
       <p className="mt-6 text-center text-gray-600">
+        <button className="">
         <a href="/" className="text-primary hover:underline">Back to Home</a>
+        </button>
       </p>
+   
+  
+
     </div>
   );
 }

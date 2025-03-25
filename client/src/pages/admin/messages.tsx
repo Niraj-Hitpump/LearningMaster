@@ -37,6 +37,7 @@ export default function AdminMessages() {
   const [activeTab, setActiveTab] = useState("unread");
   const [selectedMessage, setSelectedMessage] = useState<MessageWithDetails | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [filter, setFilter] = useState<'all' | 'contact' | 'user'>('all');
 
   // Fetch all messages
   const {
@@ -87,9 +88,17 @@ export default function AdminMessages() {
   // Mutation to reply to a message
   const replyMutation = useMutation({
     mutationFn: async ({ messageId, content }: { messageId: number; content: string }) => {
-      const res = await apiRequest("POST", `/api/messages/${messageId}/replies`, { content });
-      const data = await res.json();
-      return data;
+      const res = await apiRequest("POST", `/api/messages/${messageId}/replies`, {
+        content: content,
+        messageId: messageId,
+        isAdmin: true
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to send reply');
+      }
+      return res.json();
     },
     onSuccess: () => {
       setReplyText("");
@@ -115,6 +124,23 @@ export default function AdminMessages() {
         variant: "destructive",
       });
     },
+  });
+
+  // Add polling for new messages
+  useQuery({
+    queryKey: ["/api/messages/check-new"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 10000, // Poll every 10 seconds
+    onSuccess: (hasNew) => {
+      if (hasNew) {
+        queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/messages/unread"] });
+      }
+    },
+    onError: () => {
+      // Silently handle errors during polling
+      console.warn("Failed to check for new messages");
+    }
   });
 
   // Mutation to delete a message
@@ -207,6 +233,14 @@ export default function AdminMessages() {
   const isLoading = isLoadingAllMessages || isLoadingUnreadMessages;
   const error = allMessagesError || unreadMessagesError;
 
+  // Filter messages based on type
+  const filteredMessages = allMessages?.filter(message => {
+    if (filter === 'all') return true;
+    if (filter === 'contact') return !message.userId;
+    if (filter === 'user') return !!message.userId;
+    return true;
+  });
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar isAdmin={true} />
@@ -214,7 +248,14 @@ export default function AdminMessages() {
       <div className="flex-1 p-8 lg:ml-64">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
+              {unreadMessages.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  You have <span className="font-medium text-primary">{unreadMessages.length}</span> unread messages
+                </p>
+              )}
+            </div>
           </div>
           
           {error ? (
@@ -232,7 +273,27 @@ export default function AdminMessages() {
               <div className="lg:col-span-1">
                 <Card className="h-[calc(100vh-150px)] flex flex-col">
                   <CardHeader className="pb-2">
-                    <CardTitle>Inbox</CardTitle>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          Inbox
+                          {unreadMessages.length > 0 && (
+                            <Badge variant="destructive" className="rounded-full">
+                              {unreadMessages.length}
+                            </Badge>
+                          )}
+                        </CardTitle>
+                      </div>
+                      <select 
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value as 'all' | 'contact' | 'user')}
+                        className="text-sm border rounded-md px-2 py-1"
+                      >
+                        <option value="all">All Messages</option>
+                        <option value="contact">Contact Form</option>
+                        <option value="user">User Messages</option>
+                      </select>
+                    </div>
                     <CardDescription>
                       {unreadMessages.length > 0 && (
                         <Badge variant="secondary">{unreadMessages.length} unread</Badge>
@@ -255,41 +316,22 @@ export default function AdminMessages() {
                             <div className="flex items-center justify-center h-40">
                               <p className="text-muted-foreground">Loading messages...</p>
                             </div>
-                          ) : unreadMessages.length === 0 ? (
+                          ) : filteredMessages?.filter(m => m.status === 'unread').length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-center">
                               <Mail className="h-10 w-10 text-muted-foreground mb-2" />
                               <p className="text-muted-foreground">No unread messages</p>
                             </div>
                           ) : (
-                            sortedMessages.map((message) => (
-                              <div
-                                key={message.id}
-                                className={`p-3 mb-2 rounded-lg transition-colors cursor-pointer ${
-                                  selectedMessage?.id === message.id
-                                    ? "bg-primary/10"
-                                    : "hover:bg-gray-100"
-                                }`}
-                                onClick={() => handleSelectMessage(message)}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <Avatar>
-                                    <AvatarFallback className="bg-primary text-primary-foreground">
-                                      {getUserInitials(message)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 space-y-1 min-w-0">
-                                    <div className="flex items-center">
-                                      <span className="font-medium truncate">{message.name}</span>
-                                      {getStatusBadge(message.status)}
-                                    </div>
-                                    <p className="text-sm text-gray-500 truncate">{message.subject}</p>
-                                    <p className="text-xs text-gray-400">
-                                      {format(new Date(message.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))
+                            filteredMessages
+                              ?.filter(m => m.status === 'unread')
+                              .map((message) => (
+                                <MessageListItem
+                                  key={message.id}
+                                  message={message}
+                                  isSelected={selectedMessage?.id === message.id}
+                                  onSelect={() => handleSelectMessage(message)}
+                                />
+                              ))
                           )}
                         </div>
                       </ScrollArea>
@@ -302,40 +344,19 @@ export default function AdminMessages() {
                             <div className="flex items-center justify-center h-40">
                               <p className="text-muted-foreground">Loading messages...</p>
                             </div>
-                          ) : allMessages.length === 0 ? (
+                          ) : filteredMessages?.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-center">
                               <Mail className="h-10 w-10 text-muted-foreground mb-2" />
                               <p className="text-muted-foreground">No messages found</p>
                             </div>
                           ) : (
-                            sortedMessages.map((message) => (
-                              <div
+                            filteredMessages?.map((message) => (
+                              <MessageListItem
                                 key={message.id}
-                                className={`p-3 mb-2 rounded-lg transition-colors cursor-pointer ${
-                                  selectedMessage?.id === message.id
-                                    ? "bg-primary/10"
-                                    : "hover:bg-gray-100"
-                                }`}
-                                onClick={() => handleSelectMessage(message)}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <Avatar>
-                                    <AvatarFallback className="bg-primary text-primary-foreground">
-                                      {getUserInitials(message)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 space-y-1 min-w-0">
-                                    <div className="flex items-center">
-                                      <span className="font-medium truncate">{message.name}</span>
-                                      {getStatusBadge(message.status)}
-                                    </div>
-                                    <p className="text-sm text-gray-500 truncate">{message.subject}</p>
-                                    <p className="text-xs text-gray-400">
-                                      {format(new Date(message.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
+                                message={message}
+                                isSelected={selectedMessage?.id === message.id}
+                                onSelect={() => handleSelectMessage(message)}
+                              />
                             ))
                           )}
                         </div>
@@ -356,9 +377,20 @@ export default function AdminMessages() {
                             <CardTitle className="flex items-center">
                               {selectedMessage.subject}
                               {getStatusBadge(selectedMessage.status)}
+                              {selectedMessage.userId && (
+                                <Badge variant="outline" className="ml-2">
+                                  <UserIcon className="h-3 w-3 mr-1" />
+                                  User Message
+                                </Badge>
+                              )}
                             </CardTitle>
                             <CardDescription className="mt-1">
                               From {selectedMessage.name} ({selectedMessage.email})
+                              {selectedMessage.reason && (
+                                <span className="ml-2 text-sm">
+                                  • Reason: {selectedMessage.reason}
+                                </span>
+                              )}
                               {selectedMessage.user && (
                                 <span className="inline-flex items-center ml-2 text-xs bg-gray-100 rounded px-2 py-1">
                                   <UserIcon className="h-3 w-3 mr-1" />
@@ -459,6 +491,49 @@ export default function AdminMessages() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Add a new MessageListItem component for better organization
+function MessageListItem({ 
+  message, 
+  isSelected, 
+  onSelect 
+}: { 
+  message: MessageWithDetails; 
+  isSelected: boolean; 
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      className={`p-3 mb-2 rounded-lg transition-colors cursor-pointer ${
+        isSelected ? "bg-primary/10" : "hover:bg-gray-100"
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex items-start space-x-3">
+        <Avatar>
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {message.name[0].toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 space-y-1 min-w-0">
+          <div className="flex items-center">
+            <span className="font-medium truncate">{message.name}</span>
+            {message.userId && (
+              <Badge variant="outline" className="ml-2 text-xs">User</Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 truncate">{message.subject}</p>
+          <p className="text-xs text-gray-400">
+            {format(new Date(message.createdAt), "MMM d, yyyy 'at' h:mm a")}
+          </p>
+        </div>
+        {message.status === 'unread' && (
+          <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+        )}
       </div>
     </div>
   );
