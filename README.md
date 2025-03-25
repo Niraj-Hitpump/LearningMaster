@@ -16,13 +16,21 @@ Learning Master is an innovative e-learning platform where users can enroll in a
 ![About](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/about.png)
 
 #Contact
-![contact](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/comtact(1).png)
+![contact](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/comtact.png)
 
 #Admin Dashboard
-![Admin Dashboard](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/admin.png)
+![Admin Dashboard](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/admind.png)
 
-#Courses
-![Signup](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/signup.png)
-![Signup](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/signup.png)
+#Course Management
+![Course Management](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/coursem.png)
+
+#User Management
+![User Management](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/userm.png)
 
 
+#Add Course
+![Add Course](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/addc.png)
+
+
+#Message
+![Add Course](https://github.com/Niraj-Hitpump/LearningMaster/blob/main/images/meddage.png)
